@@ -17,9 +17,31 @@ names(Airq) # Exibe os nomes das variáveis
 
     # a variável Resposta é a airq e as demais são variáveis explicativas
 
-
+#-------------------------------------------
+              #A variável "vala" afeta "airq"?
 # Análise descritiva ou exploratória:
 summary(Airq) #Sumário das variáveis
 plot(airq~vala, data=Airq)
 
+# Criando um modelo estatístico
+# y (resposta) ~ x (explicativa)
+# y ~ x1 + x2 + x3 ...
 
+# Montando o montelo
+m1<-lm(airq~vala, data=Airq) #lm(modelo linear)
+summary(m1) # Para saber a significância do modelo
+# p-valor indica a significância do modelo ou da variável:
+# se p < que 0.05 a variável é significativa 
+# se p > que 0.05 não existe o efeito esperado
+
+# A variável "vala" não influenciou a qualidade do ar nas cidades("airq)
+
+#-------------------------------------------
+                  # A variável "vala" afeta "airq"?
+m2<-lm(airq~coas, data=Airq)
+summary(m2)
+# Sim! a posição costeira da cidade influência a qualidade de ar das cidades
+# as cidades costeiras apresentam uma melhor qualidade do ar
+plot(airq~coas, data=Airq)
+
+#-------------------------------------------
