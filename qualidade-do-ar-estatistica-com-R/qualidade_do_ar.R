@@ -45,3 +45,44 @@ summary(m2)
 plot(airq~coas, data=Airq)
 
 #-------------------------------------------
+                  # A variável "madi" afeta "airq"?
+m3<-lm(airq~medi, data=Airq)
+summary(m3)
+plot(airq~medi, data=Airq)
+#A variável não afetou a qualidade do ar
+
+#-------------------------------------------
+                  # A variável "rain" afeta "airq"?
+m4<-lm(airq~rain, data=Airq)
+summary(m4)
+plot(airq~rain, data=Airq)
+#A variável não afetou a qualidade do ar
+
+#-------------------------------------------
+                  # A variável "dens" afeta "airq"?
+m5<-lm(airq~dens, data=Airq)
+summary(m5)
+plot(airq~dens, data=Airq)
+#A variável não afetou a qualidade do ar
+
+#===========================================
+#As retas de modelos não significativos são opcionais nos gráficos
+
+#As retas no gráfico 
+#vamos usar de exemplo a variável "dens"
+plot(airq~dens, data=Airq)
+#y=p + mx
+curve(1.054e+02+-3.857e-04*x, add=TRUE)
+
+#Melhorando o gráfico
+plot(airq~dens, data=Airq, xlab="Densidade Populacional (milha quadrada)", 
+     ylab="Qualidade do ar", pch=16, col="blue", cex.lab=1.1, 
+     cex=1.1, main="Influência da Densidade Populacional na qualidade do Ar")
+#psh é o tipo do ponto, cada número representa uma representação dos pontos
+#cex.lab é o tamanho da legenda dos eixos
+#cex é para mudar o tamanho dos pontos
+#main é o título
+
+curve(1.054e+02+-3.857e-04*x, add=TRUE, col="darkblue", lwd=2, lty=2)
+#lwd é a espessura da reta
+#lty é o tipo da linha
