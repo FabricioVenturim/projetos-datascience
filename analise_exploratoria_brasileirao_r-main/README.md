@@ -1,6 +1,8 @@
 # analise_exploratoria_brasileirao_r
 ## Trabalho desenvolvido no curso de Ciência De Dados e Inteligência Artificial da FGV
 
+Repositório original: https://github.com/FabricioVenturim/analise_exploratoria_brasileirao_r
+
 Esse projeto foi dividido em duas partes:
 
 ### Análise univariada e bivariada:
