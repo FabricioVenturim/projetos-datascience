@@ -1,0 +1,768 @@
+---
+title: "Parte 1 - ggplot2"
+author: "Fabrício Dalvi Venturim e Luis Felipe Marques"
+date: "12/06/2022"
+output:
+  html_document:
+    number_sections: yes
+    highlight: tango
+    theme: cerulean
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smmoth_scroll: no
+  pdf_document:
+    toc: yes
+---
+Bibliotecas para o markdown:
+
+```{r message=FALSE, warning=FALSE}
+library("knitr")
+library("kableExtra")
+library("htmltools")
+```
+
+```{r message=FALSE, warning=FALSE}
+if(!require(ggplot2)) install.packages("ggplot2")
+library(ggplot2)
+
+if(!require(dplyr)) install.packages("dplyr")
+library(dplyr)
+
+if(!require(ggthemes)) install.packages("ggthemes")
+library(ggthemes)
+```
+O banco de dados utilizados na parte 1 do trabalho foi:
+
+https://github.com/adaoduque/Brasileirao_Dataset
+
+```{r message=FALSE, warning=FALSE}
+dados = read.csv("campeonato-brasileiro-full.csv")
+```
+
+# Curiosidade e propósito
+
+Assim como no Case Sudy do Capítulo 3 do livro do Andy Kirk, sempre fomos fanáticos por futebol e toda a estatística que busca explicar esse esporte. Nos dias de hoje, o que mais se ouve nas televisões, sites e vídeos são estatísticas e informações sobre o mundo do futebol e suas peculiaridades.
+
+Por conta disso, resolvemos pegar um banco de dados sobre o campeonato brasileiro, a fim de realizar algumas análises e tirar conclusões. 
+
+## Estudar as variáveis do banco de dados
+
+Uma boa forma de iniciar uma análise exploratória de dados é entender e classificar os tipos de variáveis do banco de dados.
+
+Vamos ver o banco de dados:
+
+```{r message=FALSE, warning=FALSE}
+str(dados)
+```
+
+```{r message=FALSE, warning=FALSE}
+head(dados)
+```
+
+```{r message=FALSE, warning=FALSE}
+tail(dados)
+```
+
+Temos que a classificação das variáveis é a seguinte:
+
+* Qualitativas:
+  + `dia`, `mandante`, `visitante`, `vencedor`, `formacao_mandante`, `formacao_visitante`, `tecnico_mandante`, `tecnico_visitante`, `arena`, `hora`, `mandante_estado`, `visitante_estado`, `estado_vencedor`.
+
+* Quantitativas:
+  + `rodada`, `temporada`, `data`, `mandante_placar`, `visitante_placar`.
+
+Agora que classificamos as variáveis, vamos fazer algumas **análises univariada**.
+
+## Análise Univariada
+
+Como eu peguei esta base da internet, certas variáveis(colunas) não me interessam muito a princípio. Portanto, vou trabalhar com as mais importante, e, caso necessário, utilizo as demais.
+
+### Variável Qualitativa
+
+Com as variáveis `vencedor`, `arena`, `estado_vencedor`, `formacao_mandante`, `formacao_visitante`, `hora` e `dia` podemos obter uma tabela de frequência, um gráfico de barras ou setores e, por fim, a moda:
+
+#### `vencedor`:
+
+frequência: 
+
+```{r message=FALSE, warning=FALSE}
+tabela <- dados %>% 
+  group_by(vencedor) %>% 
+  summarize(N = n()) %>% 
+  mutate(freq = N / sum(N), pct = round((freq*100),0))
+tabela <- tabela[order(tabela$N,decreasing=TRUE),]
+```
+
+Vamos plotar um gráfico para ter essas informaçoes visualmente:
+
+```{r message=FALSE, warning=FALSE}
+# Ordenar da maior quantidade de vitórias para a menor
+idx <- order(tabela$N, decreasing = TRUE)
+levels <- tabela$vencedor[idx]
+tabela$vencedor <- factor(tabela$vencedor, levels=levels, ordered=TRUE)
+
+# Gráfico
+p <- ggplot(tabela, aes(x = vencedor, y = N))
+p + geom_col(position = "dodge2", fill = 'blue') +
+  labs(x = "Times", y = "Quantidade") +
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 90, 
+                                   vjust = 0.5, 
+                                   hjust = 1))
+```
+
+Percebe-se que não ficou muito legal de visualizar por conta da quantidade de times. Então, vamos ver apenas os times com mais vitórias.
+
+```{r message=FALSE, warning=FALSE}
+# Ordenar da maior quantidade de vitórias para a menor
+idx <- order(tabela$N, decreasing = TRUE)
+levels <- tabela$vencedor[idx]
+tabela$vencedor <- factor(tabela$vencedor, levels=levels, ordered=TRUE)
+
+# Gráfico
+p <- ggplot(head(tabela), aes(x = vencedor, y = N))
+p + geom_col(position = "dodge2", fill = 'blue') +
+  labs(x = "Times", y = "Quantidade") +
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 90, 
+                                   vjust = 0.5, 
+                                   hjust = 1)) +
+  geom_text(aes(label = N), vjust = -1) +
+  ylim(0,2200)
+
+```
+
+**Percebe-se que, desconsiderando a quantidade de empates (-), os times que mais venceram foram o São Paulo(338), Flamengo(317), Santos(317), Internacional(304) e Corinthians(296).**
+
+**Além disso, de 2003 até 2021, houveram 2015 empates, o que, considerando que tiveram 7645 jogos, representa  26,35% dos resultados dos jogos.**
+
+#### `arena`:
+
+Vamos repeti o mesmo código, mas agora analisando a `arena`:
+
+```{r message=FALSE, warning=FALSE}
+tabela <- dados %>% 
+  group_by(arena) %>% 
+  summarize(N = n()) %>% 
+  mutate(freq = N / sum(N), pct = round((freq*100),0))
+tabela <- tabela[order(tabela$N,decreasing=TRUE),]
+```
+
+Vamos plotar um gráfico para ter essas informaçoes visualmente:
+
+```{r message=FALSE, warning=FALSE}
+# Ordenar da maior quantidade de vitórias para a menor
+idx <- order(tabela$N, decreasing = TRUE)
+levels <- tabela$arena[idx]
+tabela$arena <- factor(tabela$arena, levels=levels, ordered=TRUE)
+
+# Gráfico
+p <- ggplot(tabela, aes(x = arena, y = N))
+p + geom_col(position = "dodge2", fill = 'blue') +
+  labs(x = "Arenas", y = "Quantidade") +
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 90, 
+                                   vjust = 0.5, 
+                                   hjust = 1))
+```
+
+Novamento, vamos pegar os primeiros:
+
+```{r message=FALSE, warning=FALSE}
+# Ordenar da maior quantidade de vitórias para a menor
+idx <- order(tabela$N, decreasing = TRUE)
+levels <- tabela$arena[idx]
+tabela$arena <- factor(tabela$arena, levels=levels, ordered=TRUE)
+
+# Gráfico
+p <- ggplot(head(tabela), aes(x = arena, y = N))
+p + geom_col(position = "dodge2", fill = 'blue') +
+  labs(x = "Arenas", y = "Quantidade") +
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 90, 
+                                   vjust = 0.5, 
+                                   hjust = 1)) +
+  geom_text(aes(label = N), vjust = -1) + 
+  ylim(0, 750)
+```
+
+**Ao tentar colocar todos as arenas que houve jogos, percebe-se que fica praticamente impossível de visualizar, visto que há uma quantidade gigantesca de estádios no Brasil.**
+
+**Quando olhamos paraas arenas que tiveram mais jogos, percebemos que os que houvera mais jogos foram o Maracanã (Flamengo e Fluminense), Minerão (Cruzeiro e Atlético Mg), Morumbi(São Paulo), Couto Pereira (Coritiba) e Serra Dourada(Goiás).**
+
+#### `estado_vencedor`:
+
+Vamos repeti o mesmo código, mas agora analisando a `estado_vencedor`:
+
+```{r message=FALSE, warning=FALSE}
+tabela <- dados %>% 
+  group_by(estado_vencedor) %>% 
+  summarize(N = n()) %>% 
+  mutate(freq = N / sum(N), pct = round((freq*100),0))
+tabela <- tabela[order(tabela$N,decreasing=TRUE),]
+```
+
+Vamos plotar um gráfico para ter essas informaçoes visualmente:
+
+```{r message=FALSE, warning=FALSE}
+# Ordenar da maior quantidade de vitórias para a menor
+idx <- order(tabela$N, decreasing = TRUE)
+levels <- tabela$estado_vencedor[idx]
+tabela$estado_vencedor <- factor(tabela$estado_vencedor, levels=levels, ordered=TRUE)
+
+estados <- c("SP", "RJ", "RS", "MG", "PR","SC","GO","BA","PE","CE","PA","DF","MT","AL","RN")
+
+# Gráfico
+p <- tabela %>% filter(tabela$estado_vencedor%in%estados) %>%  ggplot(aes(x = estado_vencedor, y = N))
+
+p + geom_col(position = "dodge2", fill = 'blue') +
+  labs(x = "Estado", y = "Quantidade") +
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 90, 
+                                   vjust = 0.5, 
+                                   hjust = 1))
+```
+
+**Percebe-se que, desconsiderando a quantidade de empates (-), os estados que tiveram mais times vencedores foram São Paulo, Rio de Janiero, Rio Grande do Sul, Minas Gerais e Paraná.**
+
+**Algo interessante é que, considerando os times que mais venceram: São Paulo, Flamengo, Santos, Internacional e Corinthians, temos que eles pertence aos 3 estados que mais ganharam, sendo São Paulo, Santos e Corinthians de SP.**
+
+#### `formacao_mandante`:
+
+Vamos repeti o mesmo código, mas agora analisando a `formacao_mandante`:
+
+```{r message=FALSE, warning=FALSE}
+tabela <- dados %>% 
+  group_by(formacao_mandante) %>% 
+  summarize(N = n()) %>% 
+  mutate(freq = N / sum(N), pct = round((freq*100),0))
+tabela <- tabela[order(tabela$N,decreasing=TRUE),]
+```
+
+Vamos plotar um gráfico para ter essas informaçoes visualmente:
+
+```{r message=FALSE, warning=FALSE}
+# Ordenar da maior quantidade de vitórias para a menor
+idx <- order(tabela$N, decreasing = TRUE)
+levels <- tabela$formacao_mandante[idx]
+tabela$formacao_mandante <- factor(tabela$formacao_mandante, levels=levels, ordered=TRUE)
+
+formacoes <- c("4-2-3-1","4-1-4-1","4-3-3","4-4-2","4-2-2-2","4-3-2-1","4-3-1-2","4-4-1-1",
+               "3-4-1-2","3-4-1-2","4-1-2-1-2","3-4-3","5-4-1","4-5-1","4-1-3-2","3-5-2",
+               "5-3-2","4-2-4-0", "3-1-4-2", "3-2-4-1", "3-5-1-1")
+
+# Gráfico
+p <- tabela %>% filter(tabela$formacao_mandante%in%formacoes) %>% ggplot(aes(x = formacao_mandante, y = N), na.rm = FALSE)
+
+p + geom_col(position = "dodge2", fill = 'blue') +
+  labs(x = "Formação", y = "Quantidade") +
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 90, 
+                                   vjust = 0.5, 
+                                   hjust = 1))
+```
+
+**Portanto, a formação 4-2-3-1 é praticamente predominante nos times mandantes do campeonato brasileiro, sendo 4-1-4-1, 4-3-3 e 4-4-2 as outras mais utilizadas. **
+
+**Algo legal de ver é se esses números mudam quando analisamos os times visitantes:**
+
+#### `formacao_visitante`:
+
+Vamos repeti o mesmo código, mas agora analisando a `formacao_visitante`:
+
+```{r message=FALSE, warning=FALSE}
+tabela <- dados %>% 
+  group_by(formacao_visitante) %>% 
+  summarize(N = n()) %>% 
+  mutate(freq = N / sum(N), pct = round((freq*100),0))
+tabela <- tabela[order(tabela$N,decreasing=TRUE),]
+```
+
+Vamos plotar um gráfico para ter essas informaçoes visualmente:
+
+```{r message=FALSE, warning=FALSE}
+# Ordenar da maior quantidade de vitórias para a menor
+idx <- order(tabela$N, decreasing = TRUE)
+levels <- tabela$formacao_visitante[idx]
+tabela$formacao_visitante <- factor(tabela$formacao_visitante, levels=levels, ordered=TRUE)
+
+# Gráfico
+formacoes <- c("4-2-3-1","4-1-4-1","4-3-3","4-4-2","4-2-2-2","4-3-2-1","4-3-1-2","4-4-1-1",
+               "3-4-1-2","3-4-1-2","4-1-2-1-2","3-4-3","5-4-1","4-5-1","4-1-3-2","3-5-2",
+               "5-3-2","4-2-4-0", "3-1-4-2", "3-2-4-1", "3-5-1-1")
+
+p <- tabela %>% 
+  filter(tabela$formacao_visitante%in%formacoes) %>% 
+  ggplot(aes(x = formacao_visitante, y = N), na.rm = FALSE)
+
+p + geom_col(position = "dodge2", fill = 'blue') +
+  labs(x = "Formação", y = "Quantidade") +
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 90, 
+                                   vjust = 0.5, 
+                                   hjust = 1))
+```
+
+**Portanto, a formação 4-2-3-1 é praticamente predominante nos times mandantes do campeonato brasileiro, sendo 4-1-4-1, 4-3-3 e 4-4-2 as outras mais utilizadas. **
+
+**Percebe-se que a formação mais utilizada pelos times visitantes é novamente a 4-2-3-1. é muito interessante como, independentemente se o jogo é em casa ou fora, os times mantem a mesma formação. **
+
+#### `dia`:
+
+Vamos repeti o mesmo código, mas agora analisando a `dia`:
+
+```{r message=FALSE, warning=FALSE}
+tabela <- dados %>% 
+  group_by(dia) %>% 
+  summarize(N = n()) %>% 
+  mutate(freq = N / sum(N), pct = round((freq*100),0))
+tabela <- tabela[order(tabela$N,decreasing=TRUE),]
+```
+
+Vamos plotar um gráfico para ter essas informaçoes visualmente:
+
+```{r message=FALSE, warning=FALSE}
+# Ordenar da maior quantidade de vitórias para a menor
+idx <- order(tabela$N, decreasing = TRUE)
+levels <- tabela$dia[idx]
+tabela$dia <- factor(tabela$dia, levels=levels, ordered=TRUE)
+
+# Gráfico
+p <- ggplot(data = subset(tabela, !is.na(dia)), aes(x = dia, y = N), na.rm = FALSE)
+p + geom_col(position = "dodge2", fill = 'blue') +
+  labs(x = "Dia", y = "Quantidade") +
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 90, 
+                                   vjust = 0.5, 
+                                   hjust = 1)) +
+  geom_text(aes(label = N), vjust = -1) +
+  ylim(0, 4000)
+```
+
+**Aqui aparece algo muito interessante: a maior parte dos jogos do brasileirão ocorrem no fim de semana. Isso é explicado pois o brasileirão não ocorre em alguns meios de semanas por conta dos campeonatos em formato de copa ocorrerem no meio de semana.** 
+
+#### `hora`:
+
+Vamos repeti o mesmo código, mas agora analisando a `formacao_visitante`:
+
+```{r message=FALSE, warning=FALSE}
+tabela <- dados %>% 
+  group_by(hora) %>% 
+  summarize(N = n()) %>% 
+  mutate(freq = N / sum(N), pct = round((freq*100),0))
+tabela <- tabela[order(tabela$N,decreasing=TRUE),]
+```
+
+Vamos plotar um gráfico para ter essas informaçoes visualmente:
+
+```{r message=FALSE, warning=FALSE}
+# Ordenar da maior quantidade de vitórias para a menor
+idx <- order(tabela$N, decreasing = TRUE)
+levels <- tabela$hora[idx]
+tabela$hora <- factor(tabela$hora, levels=levels, ordered=TRUE)
+
+# Gráfico
+p <- ggplot(data = subset(tabela, !is.na(hora)), aes(x = hora, y = N), na.rm = FALSE)
+p + geom_col(position = "dodge2", fill = 'blue') +
+  labs(x = "Horário", y = "Quantidade") +
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 90, 
+                                   vjust = 0.5, 
+                                   hjust = 1)) +
+  geom_text(aes(label = N), vjust = -1) +
+  ylim(0, 2200)
+```
+
+Novamente, vamos pegar os primeiros:
+
+```{r message=FALSE, warning=FALSE}
+# Ordenar da maior quantidade de vitórias para a menor
+idx <- order(tabela$N, decreasing = TRUE)
+levels <- tabela$hora[idx]
+tabela$hora <- factor(tabela$hora, levels=levels, ordered=TRUE)
+
+# Gráfico
+p <- ggplot(head(tabela), aes(x = hora, y = N, na.rm = TRUE))
+p + geom_col(position = "dodge2", fill = 'blue') +
+  labs(x = "Horário", y = "Quantidade") +
+  theme(legend.position = "top", 
+        axis.text.x = element_text(angle = 90, 
+                                   vjust = 0.5, 
+                                   hjust = 1)) +
+  geom_text(aes(label = N), vjust = -1) + 
+  ylim(0, 2200)
+```
+
+**É notório que o horário que mais há jogos é o de 16:00. Como visto anteriomente, os dia da semana com mais jogos é o domingo, que é justamente o dia que há jogos às 16:00 e às 18:30. No meio de semana, os jogos costumam ocorrer 20:30 e 21:00.**
+
+### Variável Quantitativa
+
+As únicas variáveis quantitativas que são interessantes de fazer uma análise são `mandante_placar`, `visitante_placar`. No futuro, elas serão imprescindíveis para as análises bidimensionais. 
+
+#### `mandante_placar`
+
+Primeiramente, vamos olhar a frequência da quantidade de gols por partida dos times mandantes: 
+
+```{r message=FALSE, warning=FALSE}
+mandante_placar_frequencia <- table(dados$mandante_placar)
+mandante_placar_frequencia
+```
+
+Com esses valores, podemos gerar um histograma para melhor visualizar:
+
+```{r message=FALSE, warning=FALSE}
+ggplot(data = dados, aes(x = mandante_placar)) +
+  geom_histogram(fill = 'blue', bins = 8)
+```
+
+**É possível observar que a quantidade de gols se concentra claramente entre 0 a 3 gols por partida, sendo 1 gol o mais comum de ocorrer.**
+
+Agora, vamos observar as estatísticas descritivas e, após gerar também as estatísticas do `mandante_visitante`, compará-las:
+
+```{r message=FALSE, warning=FALSE}
+#Média
+mean(dados$mandante_placar)
+
+#Mediana
+median(dados$mandante_placar)
+
+#Quartis
+quantile(dados$mandante_placar)
+```
+
+Passando agora para medidas de dispersão, vejamos como obter máximo e mínimo, e com isso a amplitude, além da variância, desvio padrão, e coeficiente de variação. Também obtemos os quartis para calcular a amplitude interquartílica.
+
+```{r message=FALSE, warning=FALSE}
+#Max
+max(dados$mandante_placar)
+
+#Min 
+min(dados$mandante_placar)
+
+#Amplitude 
+diff(range(dados$mandante_placar))
+
+# Variância
+var(dados$mandante_placar)
+
+# Desvio-padrão
+sd(dados$mandante_placar)
+```
+
+No r há a função `summary()` que resume todo esses dados:
+
+```{r message=FALSE, warning=FALSE}
+summary(dados$mandante_placar)
+```
+
+#### `visitante_placar`
+
+Agora, vamos olhar a frequência da quantidade de gols por partida dos visitantes: 
+
+```{r message=FALSE, warning=FALSE}
+visitante_placar_frequencia <- table(dados$visitante_placar)
+visitante_placar_frequencia
+```
+
+Com esses valores, podemos gerar um histograma para melhor visualizar:
+
+```{r message=FALSE, warning=FALSE}
+ggplot(data = dados, aes(x = visitante_placar)) +
+  geom_histogram(fill = 'blue', bins = 8)
+```
+
+**Diferente dos times que jogam em casa, os times visitantes marcaram por volta de 0 a 3 gols por partida. O mais interessante é que a quantidade mais comum de ocorrer é 0 gols por partida, o que difere dos mandantes, que tinham 1 gol como mais comum.**
+
+Agora, vamos observar as estatísticas descritivas
+
+```{r message=FALSE, warning=FALSE}
+#Média
+mean(dados$visitante_placar)
+
+#Mediana
+median(dados$visitante_placar)
+
+#Quartis
+quantile(dados$visitante_placar)
+```
+
+Passando agora para medidas de dispersão, vejamos como obter máximo e mínimo, e com isso a amplitude, além da variância, desvio padrão, e coeficiente de variação. Também obtemos os quartis para calcular a amplitude interquartílica.
+
+```{r message=FALSE, warning=FALSE}
+#Max
+max(dados$visitante_placar)
+
+#Min 
+min(dados$visitante_placar)
+
+#Amplitude 
+diff(range(dados$visitante_placar))
+
+# Variância
+var(dados$visitante_placar)
+
+# Desvio-padrão
+sd(dados$visitante_placar)
+```
+
+No r há a função `summary()` que resume todo esses dados:
+
+```{r message=FALSE, warning=FALSE}
+summary(dados$visitante_placar)
+```
+
+#### Análise quantitativa
+
+**Percebe-se, portanto, que, ao comparar as médias do número de gols, os mandantes fazem 0,5 a mais de gols nas partidas, uma vez que média de gols dos mandantes é de 1.554088 e dos visitantes é de 1.027338. **
+
+**Isso fornece algo interessante: jogar em casa, por conta da torcida, do ambiente e de não ter que fazer viagens - entre outros fatores - favorece os times, visto que há uma probabilidade maior de marcar gols.**
+
+**É muito fácil perceber isso ao analisar os histogramas gerados, uma vez que, como comentado, a quantidade de gols mais comum de ocorrer para os visitantes é 0 gols por partida, o que difere dos mandantes, que possuem 1 gol como mais comum.**
+
+## Análises Bivariadas
+
+A primeira dúvida pode surgir é relacionar os desempenhos de cada time em sua respectiva temporada. Para isso, seria de muita utilidade ter um número que expresse o quão bem foi a equipe. Felizmente, já existe o conceito de "aproveitamento", expresso pela porcentagem de pontos que um time obteve em relação ao quanto poderia ter feito.
+
+Para criar uma tabela dos aproveitamentos de cada time, primeiro associamos novas variáveis times aos nossos dados. 
+
+```{r message=FALSE, warning=FALSE}
+if(!require(tidyr)) install.packages("tidyr")
+library(tidyr)
+
+dados <- dados %>%
+  mutate(time_mandante = paste(Temporada, mandante)) %>%
+  mutate(time_visitante = paste(Temporada, visitante))
+head(dados)
+```
+
+Em seguida, adicionamos variáveis que descrevem quantos pontos cada time obteve de suas partidas.
+
+```{r message=FALSE, warning=FALSE}
+dados <- dados %>%
+  mutate(pts_mandante = ifelse(mandante_placar > visitante_placar, 3, 
+                               ifelse(mandante_placar < visitante_placar, 0, 1))) %>%
+  mutate(pts_visitante = ifelse(mandante_placar < visitante_placar, 3, 
+                                ifelse(mandante_placar > visitante_placar, 0, 1)))
+head(dados)
+```
+
+Agora, podemos criar uma tabela que resume os desempenhos de cada time.
+
+```{r message=FALSE, warning=FALSE}
+times <- count(dados, time_mandante, Temporada, mandante_estado)
+names(times)[1] <- "time"
+names(times)[3] <- "estado"
+names(times)[4] <- "jogos_em_casa"
+times_2 <- count(dados, time_visitante)
+names(times_2)[1] <- "time"
+names(times_2)[2] <- "jogos_fora"
+
+times <- merge(x = times, y = times_2, by = "time", all.x = TRUE)
+
+pts_casa <- aggregate(pts_mandante ~ time_mandante, data = dados, FUN=sum)
+names(pts_casa)[1] <- "time"
+pts_fora <- aggregate(pts_visitante ~ time_visitante, data = dados, FUN=sum)
+names(pts_fora)[1] <- "time"
+
+times <- merge(x = times, y = pts_casa, by = "time", all.x = TRUE)
+times <- merge(x = times, y = pts_fora, by = "time", all.x = TRUE)
+times <- times %>%
+  mutate(aprov_casa = pts_mandante/(3*jogos_em_casa)*100) %>%
+  mutate(aprov_fora = pts_visitante/(3*jogos_fora)*100) %>%
+  mutate(pts_tot = pts_mandante+pts_visitante) %>%
+  mutate(aprov_tot = pts_tot/(3*(jogos_em_casa+jogos_fora))*100)
+glimpse(times)
+```
+
+Desta forma podemos passar a analisar as relações entre variáveis distintas.
+
+
+### Aproveitamento dentro e fora de casa
+
+```{r message=FALSE, warning=FALSE}
+p <- ggplot(data = times, mapping = aes(x = aprov_fora, y = aprov_casa, color = Temporada))
+p + geom_point() + scale_y_log10() + geom_smooth(method = "loess")
+```
+
+**Pode-se perceber que, em níveis medianos de aproveitamento em casa, não há muita correlação com o aproveitamento fora de casa. Podemos também notar uma distribuição para os cantos inferior esquerdo e superior direito, o que dá a entender que times que jogam mal em casa costumam também jogar mal fora, assim como o bom desempenho em casa costuma implicar num melhor desempenho fora de casa também.**
+
+Podemos também começar a fazer inferências sobre o desempenho dos times em relações a seus aproveitamentos.
+
+```{r message=FALSE, warning=FALSE}
+times <- times %>% arrange(Temporada, pts_tot) %>%
+  group_by(Temporada) %>%
+  mutate(rank = rank(-pts_tot))
+p <- ggplot(data = times, mapping = aes(x = aprov_fora, y = aprov_casa, color = rank))
+p + geom_point()
+```
+
+**Pode-se perceber que a variação cromática está mais relacionada ao seu posicionamento vertical, ou seja, o desempenho no campeonato está muito relacionado ao desempenho como mandante do que como visitante.**
+
+```{r message=FALSE, warning=FALSE}
+d1 <- times %>% group_by(Temporada) %>% summarize(aprov_fora_md = mean(aprov_fora))
+d2 <- times %>% group_by(Temporada) %>% summarize(aprov_casa_md = mean(aprov_casa))
+
+d <- merge(x = d2, y = d1)
+ggplot(d, aes(x = Temporada)) + geom_line(aes(y = aprov_casa_md), color = "blue") + geom_line(aes(y = aprov_fora_md), color = "red") + ylim(0, 70)
+```
+
+**Sendo o azul o aproveitamento do time em casa e o vermelho o aproveitamento do time fora, percebe-se uma nítida vantagem em jogar em casa.**  
+
+### Placares
+
+Podemos também tentar relacionar a quantidade de gols como mandante e como visitante.
+
+```{r message=FALSE, warning=FALSE}
+d <- count(dados, mandante_placar, visitante_placar)
+p <- ggplot(data = d, mapping = aes(x = mandante_placar, y = visitante_placar, size = n, color = n))
+p + geom_point()
+```
+
+```{r message=FALSE, warning=FALSE}
+head(d[order(-d$n),])
+```
+
+**Desta forma, podemos constatar que é muito mais comum um gol dos mandantes do que dos visitantes, como foi visto na análise univariável. Além disso, podemos ver que o placar mais comum é 1x0.**
+ 
+
+### Regiões dos times
+
+Outra questão interessante é a participação de diferentes estados na primeira divisão do futebol brasileiro.
+
+```{r message=FALSE, warning=FALSE}
+p <- ggplot(count(times, Temporada, estado), aes(x = Temporada, y = n, fill = estado))
+p + geom_col(position = "fill")
+```
+
+**Isso torna visível a dominância de times de estados como São Paulo e Rio de Janeiro. Entretanto, a ordem alfabética não nos ajuda muito no quesito geográfico. Assim, vamos analisar de acordo com a região, usando a estrutura de dados dos dicionários.**
+
+```{r message=FALSE, warning=FALSE}
+regiao <- c(
+"Norte",
+"Nordeste",
+"Norte",
+"Norte",
+"Nordeste",
+"Nordeste",
+"Centro-oeste",
+"Sudeste",
+"Centro-oeste",
+"Nordeste",
+"Centro-oeste",
+"Centro-oeste",
+"Sudeste",
+"Norte",
+"Nordeste",
+"Sul",
+"Nordeste",
+"Nordeste",
+"Sudeste",
+"Nordeste",
+"Sul",
+"Norte",
+"Norte",
+"Sul",
+"Sudeste",
+"Nordeste",
+"Norte")
+names(regiao) <- c("AC",
+"AL",
+"AP",
+"AM",
+"BA",
+"CE",
+"DF",
+"ES",
+"GO",
+"MA",
+"MT",
+"MS",
+"MG",
+"PA",
+"PB",
+"PR",
+"PE",
+"PI",
+"RJ",
+"RN",
+"RS",
+"RO",
+"RR",
+"SC",
+"SP",
+"SE",
+"TO")
+
+times <- times %>%
+  mutate(regiao = regiao[estado])
+
+p <- ggplot(count(times, Temporada, regiao), aes(x = Temporada, y = n, fill = regiao))
+p + geom_col(position = "fill")
+```
+
+**Agora fica clara a dominância de times da região Sudeste, de uma queda na participação de times nortistas, e um relativo aumento na participação nordestina, que pode em parte ser atribuída ao ressurgimento da Copa do Nordeste, competição que formenta o esporte na região.**
+
+
+### Estádios
+
+Uma dúvida que pode surgir é se existe uma relação entre o resultado do time mandante e seu estádio, ou seja, se existe um estádio mais "sortudo".
+
+```{r message=FALSE, warning=FALSE}
+arenas <- count(dados, arena)
+names(arenas)[2] <- "jogos"
+arenas <- merge(x = aggregate(pts_mandante ~ arena, data = dados, FUN = sum), y = arenas)
+arenas <- arenas %>%
+  mutate(aprov = pts_mandante/(3*jogos)*100)
+head(arenas[order(-arenas$aprov),], n = 30L)
+```
+
+**Assim, percebemos que ao menos os 20 estádios de maior sucesso receberam poucos jogos. Além disso, muitos fatores explicam os altos índices dos estádio de maior proeminência dentre os 30 melhores. Como, por exemplo, o Estádio Indepência tem seu mando de campo divido entre os 3 grandes clubes de Minas Gerais (Atlético-MG, Cruzeiro e América-MG).**
+
+```{r message=FALSE, warning=FALSE}
+summary(arenas)
+```
+
+**Podemos ver, pela proximidade da mediana e da média do aproveitamento dos estádios, o mais comum entre estádios de maior proeminência é ter um aproveitamento de 50%.**
+
+### Formação
+
+A formação tática do time pode revelar algum padrão relacionado ao sucesso de times no campeonato brasileiro.
+
+```{r message=FALSE, warning=FALSE}
+forma_casa <- count(dados, formacao_mandante)
+names(forma_casa)[1] <- "formacao"
+names(forma_casa)[2] <- "jogos_mandante"
+forma_casa_pts = aggregate(pts_mandante ~ formacao_mandante, data = dados, FUN = sum)
+names(forma_casa_pts)[1] <- "formacao"
+forma_casa <- merge(x = forma_casa, y = forma_casa_pts)
+
+forma_fora <- count(dados, formacao_visitante)
+names(forma_fora)[1] <- "formacao"
+names(forma_fora)[2] <- "jogos_visitante"
+forma_fora_pts = aggregate(pts_visitante ~ formacao_visitante, data = dados, FUN = sum)
+names(forma_fora_pts)[1] <- "formacao"
+forma_fora <- merge(x = forma_fora, y = forma_fora_pts)
+
+forma <- merge(x = forma_casa, forma_fora)
+forma <- forma %>%
+  mutate(aprov_casa = pts_mandante/(3*jogos_mandante)*100) %>%
+  mutate(aprov_fora = pts_visitante/(3*jogos_visitante)*100) %>%
+  mutate(aprov_tot = (pts_visitante+pts_mandante)/(3*(jogos_mandante+jogos_visitante))*100)
+
+head(forma[order(-forma$aprov_casa),][c(1, 2, 3, 6)], n = 10)
+```
+
+**Assim podemos ver que a melhor formação para mandantes é a 4-2-2-2.**
+
+```{r message=FALSE, warning=FALSE}
+head(forma[order(-forma$aprov_fora),][c(1, 4, 5, 7)], n = 10)
+```
+
+**A melhor formação para visitantes é a 4-4-1-1.**
+
+```{r message=FALSE, warning=FALSE}
+head(forma[order(-forma$aprov_tot),][c(1, 8)], n = 10)
+```
+
+**E a melhor formação no geral é a 4-2-2-2.**
